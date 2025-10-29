@@ -67,28 +67,7 @@ if submitted:
             resp = chat_with_text(
                 infer_url=invoke_url, 
                 query=prompt, 
-                stream=False,
-                force_json=True,
-                schema={
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "type": "string",
-                                "description": "Recipe name"
-                            },
-                            "ingredients": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string",
-                                    "description": "Ingredient name",
-                                }
-                            },
-                        },
-                        "required": ["name", "ingredients"]
-                    }
-                },
+                stream=False
             )
             # Try to extract assistant message
             content = None
@@ -110,6 +89,42 @@ if submitted:
             if content:
                 st.markdown("## Suggested plan")
                 st.write(escape_dollar(content))
+                
+                # Offer to research prices from the raw text
+                st.markdown("---")
+                st.markdown("### 🔍 Research Ingredient Prices")
+                st.write("Click below to automatically extract ingredients and find prices across multiple stores.")
+                
+                if st.button("Research Prices for These Ingredients", type="primary", key="research_prices"):
+                    from agent import research_ingredients_from_text
+                    
+                    with st.spinner("Extracting ingredients and researching prices..."):
+                        price_results = research_ingredients_from_text(content)
+                    
+                    if "error" in price_results:
+                        st.error(f"Error: {price_results['error']}")
+                    else:
+                        st.markdown("## 💰 Price Research Results")
+                        
+                        # Summary
+                        col1, col2, col3 = st.columns(3)
+                        col1.metric("Total Cost", price_results['total_price'])
+                        col2.metric("Found", f"{price_results['total_found']}/{price_results['total_searched']}")
+                        col3.metric("Status", price_results['status'].upper())
+                        
+                        # Itemized list
+                        st.markdown("### Itemized Ingredients")
+                        for ing in price_results['ingredients']:
+                            cols = st.columns([4, 2, 2])
+                            cols[0].write(f"**{ing['name']}**")
+                            cols[1].write(ing['price'])
+                            cols[2].write(f"_{ing['site']}_")
+                        
+                        # Save results
+                        import json as json_lib
+                        with open('ingredient_prices.json', 'w') as f:
+                            json_lib.dump(price_results, f, indent=2)
+                        st.success("✓ Results saved to ingredient_prices.json")
             else:
                 st.markdown("## Raw response")
                 st.write(escape_dollar(resp))
