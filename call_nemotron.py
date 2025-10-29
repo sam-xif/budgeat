@@ -5,7 +5,8 @@ import base64
 import sys
 from dotenv import load_dotenv
 import json
-from typing import Any, Dict, List
+import re
+from typing import Any, Dict, List, Optional, Tuple
 from tools import grocery_price_lookup
 
 invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions"
@@ -102,7 +103,49 @@ def _maybe_execute_tools(response_json: Dict[str, Any]) -> List[Dict[str, Any]]:
     return tool_messages
 
 
-def chat_with_text(infer_url, query: str, stream: bool = False):
+def _extract_message_content(resp: Dict[str, Any]) -> Optional[str]:
+    try:
+        choices = resp.get("choices") or []
+        if not choices:
+            return None
+        msg = choices[0].get("message") or {}
+        return msg.get("content")
+    except Exception:
+        return None
+
+
+def _parse_json_from_text(text: Optional[str]) -> Optional[Any]:
+    if not text or not isinstance(text, str):
+        return None
+    # Try direct parse
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+    # Try to extract a fenced JSON block
+    fenced = re.findall(r"```json\s*(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+    for block in fenced:
+        try:
+            return json.loads(block.strip())
+        except Exception:
+            continue
+    # Try to extract any JSON object substring
+    m = re.search(r"\{[\s\S]*\}$", text.strip())
+    if m:
+        try:
+            return json.loads(m.group(0))
+        except Exception:
+            return None
+    return None
+
+
+def chat_with_text(
+    infer_url,
+    query: str,
+    stream: bool = False,
+    force_json: bool = False,
+    schema: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     headers = {
         "Authorization": f"Bearer {kApiKey}",
         "Content-Type": "application/json",
@@ -115,10 +158,8 @@ def chat_with_text(infer_url, query: str, stream: bool = False):
         {
             "role": "system",
             "content": (
-                "You are a helpful assistant that suggests budget-friendly, nutritious meals and "
-                "shopping guidance for one week. You have access to the grocery_price_lookup tool "
-                "to search for prices of food items at a local grocery store. DO NOT recommend food "
-                "unless you know its price."
+                "You are a helpful assistant that suggests nutritious meals and "
+                "shopping guidance for one week. You do not know costs of meals, so never return them in your output."
             ),
         },
         {
@@ -127,23 +168,35 @@ def chat_with_text(infer_url, query: str, stream: bool = False):
         },
     ]
 
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "grocery_price_lookup",
-                "description": "Searches for prices of food items at a local grocery store.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {"type": "string", "description": "Food name in lowercase without punctuation"},
-                        # "count": {"type": "integer", "minimum": 1, "maximum": 10, "default": 5},
-                    },
-                    "required": ["query"],
-                },
+    if schema is not None:
+        messages.insert(
+            1,
+            {
+                "role": "system",
+                "content": (
+                    "When responding, return ONLY valid JSON that matches this schema. Do not add commentary.\n"
+                    f"Schema: {json.dumps(schema)}\n"
+                    "Note that this should be an ARRAY of OBJECTS that contain names of recipes and lists of their ingredients. Do not return anything else."
+                ),
             },
-        }
-    ]
+        )
+
+    tools = []
+    #     {
+    #         "type": "function",
+    #         "function": {
+    #             "name": "grocery_price_lookup",
+    #             "description": "Searches for prices of food items at a local grocery store.",
+    #             "parameters": {
+    #                 "type": "array",
+    #                 "items": {
+    #                     "type": "string",
+    #                     "description": "Food name in lowercase without punctuation"
+    #                 },
+    #             },
+    #         },
+    #     }
+    # ]
 
     payload = {
         "max_tokens": 20000,
@@ -158,6 +211,10 @@ def chat_with_text(infer_url, query: str, stream: bool = False):
         # Optionally:
         # "tool_choice": "auto",
     }
+
+    if force_json:
+        # Many OpenAI-compatible APIs support this flag; if unsupported it will be ignored server-side
+        payload["response_format"] = {"type": "json_object"}
 
     # First completion
     first = _post_completion(infer_url, headers, payload, stream=stream)
@@ -186,8 +243,16 @@ def chat_with_text(infer_url, query: str, stream: bool = False):
             # "tool_choice": "auto",
         }
         second = _post_completion(infer_url, headers, followup_payload, stream=False)
+        # Attempt structured parse
+        parsed = _parse_json_from_text(_extract_message_content(second)) if (force_json or schema is not None) else None
+        if parsed is not None:
+            second["structured_output"] = parsed
         return second
 
+    # Attempt structured parse on first response
+    parsed = _parse_json_from_text(_extract_message_content(first)) if (force_json or schema is not None) else None
+    if parsed is not None:
+        first["structured_output"] = parsed
     return first
 
 def chat_with_media(infer_url, media_files, query: str, stream: bool = False):

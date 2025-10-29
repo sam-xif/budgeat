@@ -64,7 +64,32 @@ if submitted:
 
     with st.spinner("Generating suggestions..."):
         try:
-            resp = chat_with_text(infer_url=invoke_url, query=prompt, stream=False)
+            resp = chat_with_text(
+                infer_url=invoke_url, 
+                query=prompt, 
+                stream=False,
+                force_json=True,
+                schema={
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "Recipe name"
+                            },
+                            "ingredients": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "description": "Ingredient name",
+                                }
+                            },
+                        },
+                        "required": ["name", "ingredients"]
+                    }
+                },
+            )
             # Try to extract assistant message
             content = None
             if isinstance(resp, dict):
