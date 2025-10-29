@@ -33,11 +33,13 @@ def get_browser_context():
     
     # Launch with stealth settings
     browser = playwright.chromium.launch(
-        headless=False,  # Non-headless is less detectable
+        headless=True,  # Headless is much faster
         args=[
             '--disable-blink-features=AutomationControlled',
             '--disable-dev-shm-usage',
             '--no-sandbox',
+            '--disable-gpu',
+            '--disable-software-rasterizer',
         ]
     )
     
@@ -75,7 +77,8 @@ def save_browser_state(page: Page):
         
         # Also take a screenshot for vision analysis
         screenshot_path = "/tmp/budgeat_screenshot.png"
-        page.screenshot(path=screenshot_path, full_page=False)  # Just viewport
+        # Lower quality for faster encoding/upload
+        page.screenshot(path=screenshot_path, full_page=False, quality=60)
         SHARED_STATE.last_screenshot = screenshot_path
     except Exception as e:
         print(f"Could not save browser state: {e}")
@@ -86,13 +89,16 @@ def navigate_to_url(url: str) -> str:
     playwright, browser, page = get_browser_context()
     try:
         print(f"Navigating to {url}...")
-        page.goto(url, wait_until='domcontentloaded', timeout=90000)
+        page.goto(url, wait_until='domcontentloaded', timeout=60000)
         
         # Wait for JavaScript to execute and load dynamic content
-        page.wait_for_load_state('networkidle', timeout=30000)
+        try:
+            page.wait_for_load_state('networkidle', timeout=10000)
+        except:
+            pass  # Continue even if timeout
         
-        # Extra wait for lazy-loaded content
-        page.wait_for_timeout(5000)
+        # Brief wait for lazy-loaded content
+        page.wait_for_timeout(1500)  # Reduced from 5s to 1.5s
         
         save_browser_state(page)
         return f"Successfully navigated to {url}. Page loaded with dynamic content."
@@ -414,3 +420,132 @@ class ResearchAgent:
         SHARED_STATE.current_url = None
         SHARED_STATE.last_action = None
         print("Cleared browser state.")
+
+
+def research_recipes(recipes: List[dict]) -> List[dict]:
+    """
+    Automatically research prices for multiple recipes across all available sites.
+    
+    Args:
+        recipes: List of dicts with format:
+            {
+                "name": "Recipe Name",
+                "ingredients": ["milk", "eggs", "flour"]
+            }
+    
+    Returns:
+        List of dicts with format:
+            {
+                "name": "Recipe Name",
+                "ingredients": [
+                    {"name": "milk", "price": "$3.99", "site": "Target"},
+                    {"name": "eggs", "price": "$4.50", "site": "Walmart"}
+                ],
+                "total_price": "$8.49",
+                "status": "success" or "partial" or "failed"
+            }
+    """
+    import json
+    
+    # Load available sites
+    try:
+        with open('sites.json', 'r') as f:
+            sites_config = json.load(f)
+        sites = sites_config['sites']
+    except Exception as e:
+        return [{"error": f"Could not load sites.json: {e}"}]
+    
+    # Initialize agent
+    agent = ResearchAgent()
+    results = []
+    
+    for recipe in recipes:
+        recipe_name = recipe.get('name', 'Unknown Recipe')
+        ingredients = recipe.get('ingredients', [])
+        
+        print(f"\n{'='*60}")
+        print(f"Researching recipe: {recipe_name}")
+        print(f"{'='*60}")
+        
+        recipe_result = {
+            "name": recipe_name,
+            "ingredients": [],
+            "total_price": None,
+            "status": "in_progress"
+        }
+        
+        ingredient_prices = []
+        
+        for ingredient in ingredients:
+            print(f"\nSearching for: {ingredient}")
+            found_price = None
+            found_site = None
+            
+            # Try each site until we get a successful result
+            for site in sites:
+                site_name = site['name']
+                site_url = site['url']
+                
+                try:
+                    print(f"  Trying {site_name}...")
+                    result = agent.run(
+                        url=site_url,
+                        search_selector=site.get('search_bar_selector', ''),
+                        product_query=ingredient
+                    )
+                    
+                    # Parse the result to extract price
+                    # Look for price patterns like $X.XX
+                    import re
+                    price_match = re.search(r'\$\d+\.?\d*', str(result))
+                    
+                    if price_match:
+                        found_price = price_match.group()
+                        found_site = site_name
+                        print(f"  ✓ Found on {site_name}: {found_price}")
+                        break  # Got a price, move to next ingredient
+                    else:
+                        print(f"  ✗ No price found on {site_name}")
+                        
+                except Exception as e:
+                    print(f"  ✗ Error on {site_name}: {str(e)[:50]}")
+                    continue
+            
+            # Record result for this ingredient
+            ingredient_result = {
+                "name": ingredient,
+                "price": found_price if found_price else "Not found",
+                "site": found_site if found_site else "N/A"
+            }
+            recipe_result["ingredients"].append(ingredient_result)
+            
+            if found_price:
+                # Extract numeric value for total calculation
+                try:
+                    price_value = float(found_price.replace('$', ''))
+                    ingredient_prices.append(price_value)
+                except:
+                    pass
+        
+        # Calculate total price
+        if ingredient_prices:
+            total = sum(ingredient_prices)
+            recipe_result["total_price"] = f"${total:.2f}"
+            
+            # Determine status
+            if len(ingredient_prices) == len(ingredients):
+                recipe_result["status"] = "success"
+            else:
+                recipe_result["status"] = "partial"
+        else:
+            recipe_result["status"] = "failed"
+            recipe_result["total_price"] = "N/A"
+        
+        results.append(recipe_result)
+        
+        print(f"\n{recipe_name} Total: {recipe_result['total_price']}")
+    
+    # Cleanup
+    agent.shutdown()
+    
+    return results
