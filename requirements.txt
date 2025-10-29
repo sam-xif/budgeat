@@ -6,4 +6,7 @@ python-dotenv
 langchain
 langchain-core
 langchain-openai
+python-dotenv>=1.0.1
+mcp>=0.1.0
+anyio>=4.4.0
 

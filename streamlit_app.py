@@ -2,6 +2,11 @@ import streamlit as st
 import os
 import json
 from agent import ResearchAgent
+from dotenv import load_dotenv
+
+# Load environment variables from .env before importing call_nemotron
+load_dotenv()
+
 from call_nemotron import chat_with_text, invoke_url, kApiKey
 
 
@@ -67,12 +72,22 @@ if submitted:
                 if choices:
                     msg = choices[0].get("message") or {}
                     content = msg.get("content")
+
+            def escape_dollar(obj):
+                if isinstance(obj, str):
+                    return obj.replace("$", r"\\$")
+                elif isinstance(obj, dict):
+                    return {escape_dollar(k): escape_dollar(v) for k, v in obj.items()}
+                elif isinstance(obj, list):
+                    return [escape_dollar(i) for i in obj]
+                else:
+                    return obj
             if content:
                 st.markdown("## Suggested plan")
-                st.write(content)
+                st.write(escape_dollar(content))
             else:
                 st.markdown("## Raw response")
-                st.write(resp)
+                st.write(escape_dollar(resp))
         except Exception as e:
             st.error(f"Failed to generate response: {e}")
 else:

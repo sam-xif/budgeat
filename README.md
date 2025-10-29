@@ -10,70 +10,38 @@ AI-powered grocery price research with vision capabilities. Uses NVIDIA's Nemotr
 - ⚡ **Fast** - Optimized with headless browsing and smart waits
 - 📊 **Batch Processing** - Research entire recipes automatically
 
-## Quick Start
+3. Create a .env file with your NVIDIA API key:
+   ```bash
+   echo "NVIDIA_API_KEY=your_key_here" > .env
+   ```
+
+4. Run the app:
+   ```bash
+   streamlit run streamlit_app.py
+   ```
 
 ### 1. Setup Environment
 
-```bash
-# Create virtual environment
-python3 -m venv .venv && source .venv/bin/activate
+Results are shown after submitting the form. We'll refine the UI and data model next.
 
-# Install dependencies
-pip install -r requirements.txt
 
-# Install Playwright browsers
-playwright install chromium
 
-# Set your NVIDIA API key in .env
-echo "NVIDIA_API_KEY=your_key_here" > .env
-```
+## High level idea
+An AI agent that shops for you according to your budgetary, caloric intake, and cuisine preferences.
+This takes the burden off of, say, parents who may be operating on a tight budget and don't have the time to 
+enumerate all of the food options available. 
 
-### 2. Run the Web UI
 
-```bash
-streamlit run streamlit_app.py
-```
 
-Then search for products on various stores with real-time AI progress tracking.
+## Workflow
+1. Ingest user preferences
+2. Call spoonacular to get a set of recipes that can be cooked based on preference items (lookup first 10 recipes for simplicity)
+3. Produce a mapping from recipe to list of ingredients
+4. Perform a greedy algorithm to find the set of recipes for which common forms of the ingredients are within budget
+5. Return the list of recipes to the user and produce a shopping list to take with them to the store
 
-### 3. Batch Recipe Research (Automated)
+Nice-to-haves later: 
+1. actually compute prices based on amounts of ingredients. 
+2. actually place the order on instacart or something
 
-```bash
-python research_recipes.py
-```
 
-Or use programmatically:
-
-```python
-from agent import research_recipes
-
-recipes = [
-    {
-        "name": "Breakfast Bowl",
-        "ingredients": ["milk", "eggs", "bread"]
-    },
-    {
-        "name": "Pasta Night",
-        "ingredients": ["pasta", "tomato sauce", "ground beef"]
-    }
-]
-
-results = research_recipes(recipes)
-# Returns structured price data for each recipe
-```
-
-## How It Works
-
-1. **Navigate** - Goes directly to search URLs (e.g., `target.com/s?searchTerm=milk`)
-2. **Wait for JS** - Waits for dynamic content to load
-3. **Try HTML parsing** - Attempts to extract text from page
-4. **Fall back to Vision** - If HTML is incomplete, sends screenshot to NVIDIA's VLM
-5. **Extract prices** - AI reads and understands the content to find relevant prices
-
-## Architecture
-
-- **LangGraph** - Agentic reasoning framework
-- **NVIDIA Nemotron** - Vision-language model for understanding content
-- **Playwright** - Browser automation with stealth mode
-- **BeautifulSoup** - HTML parsing
-- **Streamlit** - Interactive web UI
