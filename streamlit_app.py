@@ -77,18 +77,9 @@ if submitted:
                     msg = choices[0].get("message") or {}
                     content = msg.get("content")
 
-            def escape_dollar(obj):
-                if isinstance(obj, str):
-                    return obj.replace("$", r"\\$")
-                elif isinstance(obj, dict):
-                    return {escape_dollar(k): escape_dollar(v) for k, v in obj.items()}
-                elif isinstance(obj, list):
-                    return [escape_dollar(i) for i in obj]
-                else:
-                    return obj
             if content:
                 st.markdown("## Suggested plan")
-                st.write(escape_dollar(content))
+                st.write(content)
                 
                 # Offer to research prices from the raw text
                 st.markdown("---")
@@ -127,7 +118,7 @@ if submitted:
                         st.success("✓ Results saved to ingredient_prices.json")
             else:
                 st.markdown("## Raw response")
-                st.write(escape_dollar(resp))
+                st.write(resp)
         except Exception as e:
             st.error(f"Failed to generate response: {e}")
 else:
