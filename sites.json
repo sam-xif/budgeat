@@ -1,0 +1,28 @@
+{
+    "sites": [
+        {
+            "name": "Target",
+            "url": "https://www.target.com",
+            "search_bar_selector": "[data-test='@web/Search/SearchInput']",
+            "product_selector": "[data-test='product-card']"
+        },
+        {
+            "name": "Amazon",
+            "url": "https://www.amazon.com",
+            "search_bar_selector": "#twotabsearchtextbox",
+            "product_selector": ".s-result-item"
+        },
+        {
+            "name": "Walmart",
+            "url": "https://www.walmart.com",
+            "search_bar_selector": "input[name='q']",
+            "product_selector": ".product"
+        },
+        {
+            "name": "Kroger",
+            "url": "https://www.kroger.com",
+            "search_bar_selector": "#SearchBar-input",
+            "product_selector": "[data-qa='cart-page-item-product']"
+        }
+    ]
+}

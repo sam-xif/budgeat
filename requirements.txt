@@ -1,3 +1,9 @@
 streamlit==1.39.0
 requests>=2.31.0
+playwright
+beautifulsoup4
+python-dotenv
+langchain
+langchain-core
+langchain-openai
 
