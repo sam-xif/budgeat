@@ -1,0 +1,365 @@
+{
+  "ingredients": [
+    {
+      "name": "whole wheat pasta",
+      "price": "0.99 USD",
+      "site": "Target",
+      "calories": 357,
+      "serving_size": "100g"
+    },
+    {
+      "name": "grilled chickpeas",
+      "price": "2.99 USD",
+      "site": "Target",
+      "calories": 211,
+      "serving_size": "100g"
+    },
+    {
+      "name": "cherry tomatoes",
+      "price": "2.79 USD",
+      "site": "Target",
+      "calories": 21,
+      "serving_size": "100g"
+    },
+    {
+      "name": "cucumber",
+      "price": "0.99 USD",
+      "site": "Target",
+      "calories": 34,
+      "serving_size": "100g"
+    },
+    {
+      "name": "kalamata olives",
+      "price": "3.99 USD",
+      "site": "Target",
+      "calories": 233,
+      "serving_size": "100g"
+    },
+    {
+      "name": "red onion",
+      "price": "0.99 USD",
+      "site": "Target",
+      "calories": 30,
+      "serving_size": "100g"
+    },
+    {
+      "name": "fresh parsley",
+      "price": "6.29 USD",
+      "site": "Target",
+      "calories": 36,
+      "serving_size": "100g"
+    },
+    {
+      "name": "feta cheese",
+      "price": "4.99 USD",
+      "site": "Target",
+      "calories": 286,
+      "serving_size": "100g"
+    },
+    {
+      "name": "greek dressing",
+      "price": "3.69 USD",
+      "site": "Target",
+      "calories": 333,
+      "serving_size": "100g"
+    },
+    {
+      "name": "bell peppers",
+      "price": "2.89 USD",
+      "site": "Target",
+      "calories": 18,
+      "serving_size": "100g"
+    },
+    {
+      "name": "cooked rice",
+      "price": "1.69 USD",
+      "site": "Target",
+      "calories": 107,
+      "serving_size": "100g"
+    },
+    {
+      "name": "ground turkey",
+      "price": "6.49 USD",
+      "site": "Target",
+      "calories": 143,
+      "serving_size": "100g"
+    },
+    {
+      "name": "plant-based crumbles",
+      "price": "3.59 USD",
+      "site": "Target",
+      "calories": 145,
+      "serving_size": "100g"
+    },
+    {
+      "name": "diced onion",
+      "price": "0.99 USD",
+      "site": "Target",
+      "calories": 35,
+      "serving_size": "100g"
+    },
+    {
+      "name": "diced carrots",
+      "price": "2.39 USD",
+      "site": "Target",
+      "calories": 25,
+      "serving_size": "100g"
+    },
+    {
+      "name": "canned diced tomatoes",
+      "price": "2.49 USD",
+      "site": "AI Estimated",
+      "calories": 18,
+      "serving_size": "100g"
+    },
+    {
+      "name": "italian seasoning",
+      "price": "0.99 USD",
+      "site": "Target",
+      "calories": 15,
+      "serving_size": "100g"
+    },
+    {
+      "name": "mozzarella cheese",
+      "price": "2.19 USD",
+      "site": "Target",
+      "calories": 286,
+      "serving_size": "100g"
+    },
+    {
+      "name": "cooked quinoa",
+      "price": "3.59 USD",
+      "site": "Target",
+      "calories": 120,
+      "serving_size": "100g"
+    },
+    {
+      "name": "canned black beans",
+      "price": "0.99 USD",
+      "site": "Target",
+      "calories": 130,
+      "serving_size": "100g"
+    },
+    {
+      "name": "avocado",
+      "price": "2.99 USD",
+      "site": "Target",
+      "calories": 160,
+      "serving_size": "100g"
+    },
+    {
+      "name": "fresh cilantro",
+      "price": "2.39 USD",
+      "site": "Target",
+      "calories": 25,
+      "serving_size": "100g"
+    },
+    {
+      "name": "lime wedges",
+      "price": "0.39 USD",
+      "site": "Target",
+      "calories": 162,
+      "serving_size": "100g"
+    },
+    {
+      "name": "salt to taste",
+      "price": "0.99 USD",
+      "site": "Target",
+      "calories": 747,
+      "serving_size": "100g"
+    },
+    {
+      "name": "eggplant",
+      "price": "2.69 USD",
+      "site": "Target",
+      "calories": 183,
+      "serving_size": "100g"
+    },
+    {
+      "name": "canned chickpeas",
+      "price": "0.99 USD",
+      "site": "Target",
+      "calories": 197,
+      "serving_size": "100g"
+    },
+    {
+      "name": "onion",
+      "price": "0.99 USD",
+      "site": "Target",
+      "calories": 40,
+      "serving_size": "100g"
+    },
+    {
+      "name": "garlic",
+      "price": "2.49 USD",
+      "site": "AI Estimated",
+      "calories": 149,
+      "serving_size": "100g"
+    },
+    {
+      "name": "ground cumin",
+      "price": "0.99 USD",
+      "site": "Target",
+      "calories": 347,
+      "serving_size": "100g"
+    },
+    {
+      "name": "ground coriander",
+      "price": "5.59 USD",
+      "site": "Target",
+      "calories": 260,
+      "serving_size": "100g"
+    },
+    {
+      "name": "paprika",
+      "price": "3.99 USD",
+      "site": "Target",
+      "calories": 318,
+      "serving_size": "100g"
+    },
+    {
+      "name": "vegetable stock",
+      "price": "1.59 USD",
+      "site": "Target",
+      "calories": 15,
+      "serving_size": "100g"
+    },
+    {
+      "name": "cilantro or parsley",
+      "price": "2.39 USD",
+      "site": "Target",
+      "calories": 12,
+      "serving_size": "100g"
+    },
+    {
+      "name": "whole grain pita bread",
+      "price": "3.29 USD",
+      "site": "Target",
+      "calories": 240,
+      "serving_size": "100g"
+    },
+    {
+      "name": "hummus",
+      "price": "4.59 USD",
+      "site": "Target",
+      "calories": 166,
+      "serving_size": "100g"
+    },
+    {
+      "name": "shredded lettuce",
+      "price": "2.19 USD",
+      "site": "Target",
+      "calories": 15,
+      "serving_size": "100g"
+    },
+    {
+      "name": "diced cucumber",
+      "price": "0.99 USD",
+      "site": "Target",
+      "calories": 16,
+      "serving_size": "100g"
+    },
+    {
+      "name": "sliced tomatoes",
+      "price": "3.69 USD",
+      "site": "Target",
+      "calories": 25,
+      "serving_size": "100g"
+    },
+    {
+      "name": "sliced black olives",
+      "price": "1.99 USD",
+      "site": "Target",
+      "calories": 140,
+      "serving_size": "100g"
+    },
+    {
+      "name": "dried green or brown lentils",
+      "price": "2.39 USD",
+      "site": "Target",
+      "calories": 116,
+      "serving_size": "100g"
+    },
+    {
+      "name": "fresh thyme",
+      "price": "0.99 USD",
+      "site": "Target",
+      "calories": 20,
+      "serving_size": "100g"
+    },
+    {
+      "name": "bay leaf",
+      "price": "3.59 USD",
+      "site": "Target",
+      "calories": 15,
+      "serving_size": "100g"
+    },
+    {
+      "name": "salt",
+      "price": "5.99 USD",
+      "site": "Amazon",
+      "calories": 0,
+      "serving_size": "100g"
+    },
+    {
+      "name": "pepper",
+      "price": "13.99 USD",
+      "site": "Target",
+      "calories": 31,
+      "serving_size": "100g"
+    },
+    {
+      "name": "avocados",
+      "price": "2.99 USD",
+      "site": "Target",
+      "calories": 160,
+      "serving_size": "100g"
+    },
+    {
+      "name": "fresh spinach",
+      "price": "2.19 USD",
+      "site": "Target",
+      "calories": 23,
+      "serving_size": "100g"
+    },
+    {
+      "name": "canned artichoke hearts",
+      "price": "2.79 USD",
+      "site": "Target",
+      "calories": 230,
+      "serving_size": "100g"
+    },
+    {
+      "name": "greek yogurt",
+      "price": "1.49 USD",
+      "site": "Target",
+      "calories": 59,
+      "serving_size": "100g"
+    },
+    {
+      "name": "vegan alternative",
+      "price": "6.29 USD",
+      "site": "Target",
+      "calories": 260,
+      "serving_size": "100g"
+    },
+    {
+      "name": "lemon juice",
+      "price": "2.99 USD",
+      "site": "Target",
+      "calories": 25,
+      "serving_size": "100g"
+    },
+    {
+      "name": "pepper.",
+      "price": "2.89 USD",
+      "site": "Target",
+      "calories": 30,
+      "serving_size": "100g"
+    }
+  ],
+  "total_price": "149.79 USD",
+  "total_calories": 6769,
+  "items_found": 51,
+  "items_total": 51
+}

@@ -47,12 +47,15 @@ if submitted:
     )
 
     prompt = (
-        "Using the following user goals, suggest a brief plan for budget-friendly, "
-        "nutritious meals and shopping guidance for one week. "
-        f"Weekly budget: ${weekly_budget:.2f}. "
-        f"Daily calories: {int(daily_calories)} kcal. "
-        f"Preferences: {preferences.strip() or 'None specified'}. "
-        "Focus on variety, affordability, and practicality."
+        "Generate 5-7 simple recipes that fit these requirements:\n"
+        f"- Budget: ${weekly_budget:.2f}\n"
+        f"- Target calories per meal: ~{int(daily_calories/3)} kcal\n"
+        f"- Preferences: {preferences.strip() or 'None specified'}\n\n"
+        "For EACH recipe, list:\n"
+        "1. Recipe name (e.g., 'Scrambled Eggs', 'Chicken Stir Fry')\n"
+        "2. Individual grocery ingredients needed (e.g., 'eggs', 'butter', 'milk')\n\n"
+        "DO NOT organize by days of the week. Just list recipes.\n"
+        "Keep ingredients simple and searchable at grocery stores."
     )
 
     # Allow overriding API key via environment variable at runtime
@@ -81,41 +84,46 @@ if submitted:
                 st.markdown("## Suggested plan")
                 st.write(content)
                 
-                # Offer to research prices from the raw text
                 st.markdown("---")
-                st.markdown("### 🔍 Research Ingredient Prices")
-                st.write("Click below to automatically extract ingredients and find prices across multiple stores.")
+                st.markdown("## 💰 Researching Prices & Calories...")
                 
-                if st.button("Research Prices for These Ingredients", type="primary", key="research_prices"):
-                    from agent import research_ingredients_from_text
-                    
-                    with st.spinner("Extracting ingredients and researching prices..."):
+                from agent import research_ingredients_from_text
+                
+                try:
+                    with st.spinner("Extracting ingredients and finding prices across stores..."):
                         price_results = research_ingredients_from_text(content)
                     
                     if "error" in price_results:
-                        st.error(f"Error: {price_results['error']}")
+                        st.error(f"❌ Error during extraction:")
+                        st.code(str(price_results['error']))
                     else:
-                        st.markdown("## 💰 Price Research Results")
+                        st.markdown("## ✅ Complete Shopping List with Prices & Calories")
                         
-                        # Summary
+                        # Totals
                         col1, col2, col3 = st.columns(3)
                         col1.metric("Total Cost", price_results['total_price'])
-                        col2.metric("Found", f"{price_results['total_found']}/{price_results['total_searched']}")
-                        col3.metric("Status", price_results['status'].upper())
+                        col2.metric("Total Calories", f"{price_results['total_calories']:,} kcal")
+                        col3.metric("Items Found", f"{price_results['items_found']}/{price_results['items_total']}")
                         
                         # Itemized list
                         st.markdown("### Itemized Ingredients")
                         for ing in price_results['ingredients']:
-                            cols = st.columns([4, 2, 2])
-                            cols[0].write(f"**{ing['name']}**")
+                            cols = st.columns([3, 2, 2, 2])
+                            cols[0].write(f"• **{ing['name']}**")
                             cols[1].write(ing['price'])
-                            cols[2].write(f"_{ing['site']}_")
+                            cols[2].write(f"{ing['calories']:,} kcal")
+                            cols[3].write(f"_{ing['site']}_")
                         
                         # Save results
                         import json as json_lib
                         with open('ingredient_prices.json', 'w') as f:
                             json_lib.dump(price_results, f, indent=2)
                         st.success("✓ Results saved to ingredient_prices.json")
+                
+                except Exception as e:
+                    st.error(f"❌ SYSTEM CRASH:")
+                    import traceback
+                    st.code(traceback.format_exc())
             else:
                 st.markdown("## Raw response")
                 st.write(resp)

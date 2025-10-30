@@ -422,6 +422,197 @@ class ResearchAgent:
         print("Cleared browser state.")
 
 
+def research_ingredients_from_text(raw_text: str) -> dict:
+    """
+    Extract ingredients from any text and research prices + calories.
+    
+    Args:
+        raw_text: Any text containing food items
+    
+    Returns:
+        {
+            "ingredients": [{"name": "milk", "price": "$3.99", "site": "Target", "calories": 150}],
+            "total_price": "$45.67",
+            "total_calories": 1200,
+            "status": "success"
+        }
+    """
+    import json
+    from usda_calories import get_usda_calories
+    
+    # Use AI to extract ingredients
+    api_key = os.getenv("NVIDIA_API_KEY")
+    if not api_key:
+        return {"error": "NVIDIA_API_KEY not set"}
+    
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    
+    extraction_prompt = f"""List ALL unique grocery items from this text. 
+Just list each ingredient ONCE as a simple comma-separated list.
+No amounts, no formatting, just the items.
+
+
+Text:
+{raw_text[:5000]}
+
+Output:"""
+    
+    payload = {
+        "model": "nvidia/nemotron-nano-12b-v2-vl",
+        "messages": [{"role": "user", "content": extraction_prompt}],
+        "max_tokens": 2048,  # Increased for longer recipe lists
+        "stream": False
+    }
+    
+    try:
+        response = requests.post("https://integrate.api.nvidia.com/v1/chat/completions", headers=headers, json=payload)
+        response.raise_for_status()
+        content = response.json()['choices'][0]['message']['content']
+        
+        print(f"\nAI Extraction Response:\n{content[:300]}...\n")
+        
+        # Simple parsing - split by commas and clean up
+        ingredients = []
+        for item in content.split(','):
+            item = item.strip().lower()
+            # Clean up any numbers, parentheses, etc
+            item = re.sub(r'\d+', '', item)
+            item = re.sub(r'[():]', '', item)
+            item = item.strip()
+            if len(item) > 2 and item not in ingredients:
+                ingredients.append(item)
+        
+        if not ingredients:
+            return {"error": f"Could not extract ingredients. AI returned:\n{content}"}
+    
+    except Exception as e:
+        return {"error": f"Failed to extract ingredients: {e}"}
+    
+    print(f"\nExtracted {len(ingredients)} unique ingredients")
+    
+    # Load sites
+    try:
+        with open('sites.json', 'r') as f:
+            sites = json.load(f)['sites']
+    except Exception as e:
+        return {"error": f"Could not load sites.json: {e}"}
+    
+    agent = ResearchAgent()
+    results = []
+    total_prices = []
+    total_calories = []
+    
+    print(f"\n{'='*60}")
+    print(f"Researching Prices and Calories")
+    print(f"{'='*60}")
+    
+    # Process each ingredient
+    for ingredient in ingredients:
+        print(f"\nSearching for: {ingredient}")
+        found_price = None
+        found_site = None
+        
+        # Search for price
+        for site in sites:
+            try:
+                print(f"  Trying {site['name']}...")
+                result = agent.run(url=site['url'], search_selector='', product_query=ingredient)
+                price_match = re.search(r'\$\d+\.?\d*', str(result))
+                if price_match:
+                    found_price = price_match.group()
+                    found_site = site['name']
+                    print(f"  ✓ Found on {site['name']}: {found_price}")
+                    break
+            except Exception as e:
+                print(f"  ✗ Error on {site['name']}")
+                continue
+        
+        # Get calorie data from USDA
+        calorie_data = get_usda_calories(ingredient)
+        
+        # If no price found, use AI to estimate
+        if not found_price:
+            print(f"  No price found. Using AI to estimate...")
+            estimate_prompt = f"Estimate the typical grocery store price in USD for: {ingredient}. Reply with ONLY a number (e.g., 3.99)"
+            try:
+                est_response = requests.post(
+                    "https://integrate.api.nvidia.com/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json={
+                        "model": "nvidia/nemotron-nano-12b-v2-vl",
+                        "messages": [{"role": "user", "content": estimate_prompt}],
+                        "max_tokens": 50,
+                        "stream": False
+                    }
+                )
+                est_content = est_response.json()['choices'][0]['message']['content']
+                price_match = re.search(r'\d+\.?\d*', est_content)
+                if price_match:
+                    found_price = f"${price_match.group()}"
+                    found_site = "AI Estimated"
+                    print(f"  AI Estimated: {found_price}")
+            except Exception as e:
+                found_price = "$5.00"  # Hard fallback
+                found_site = "Default"
+                print(f"  Using default: {found_price}")
+        
+        # If no calories found, use AI to estimate
+        if not calorie_data.get("calories"):
+            print(f"  No USDA data. Using AI to estimate calories...")
+            cal_prompt = f"Estimate the calories per 100g for: {ingredient}. Reply with ONLY a number (e.g., 150)"
+            try:
+                cal_response = requests.post(
+                    "https://integrate.api.nvidia.com/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                    json={
+                        "model": "nvidia/nemotron-nano-12b-v2-vl",
+                        "messages": [{"role": "user", "content": cal_prompt}],
+                        "max_tokens": 50,
+                        "stream": False
+                    }
+                )
+                cal_content = cal_response.json()['choices'][0]['message']['content']
+                cal_match = re.search(r'\d+', cal_content)
+                if cal_match:
+                    calorie_data = {"calories": int(cal_match.group()), "serving_size": "100g", "found": True}
+                    print(f"  AI Estimated: {calorie_data['calories']} kcal")
+            except Exception as e:
+                calorie_data = {"calories": 100, "serving_size": "100g", "found": True}
+                print(f"  Using default: 100 kcal")
+        
+        print(f"  Final: {found_price} | {calorie_data.get('calories')} kcal")
+        
+        # Format price with USD
+        price_display = found_price.replace('$', '') + ' USD'
+        
+        results.append({
+            "name": ingredient,
+            "price": price_display,
+            "site": found_site,
+            "calories": calorie_data.get("calories"),
+            "serving_size": calorie_data.get("serving_size")
+        })
+        
+        # Add to totals
+        try:
+            price_val = float(found_price.replace('$', ''))
+            total_prices.append(price_val)
+        except:
+            pass
+        
+        total_calories.append(calorie_data.get("calories", 0))
+    
+    agent.shutdown()
+    
+    return {
+        "ingredients": results,
+        "total_price": f"{sum(total_prices):.2f} USD" if total_prices else "0.00 USD",
+        "total_calories": sum(total_calories) if total_calories else 0,
+        "items_found": len(total_prices),
+        "items_total": len(ingredients)
+    }
+
+
 def research_recipes(recipes: List[dict]) -> List[dict]:
     """
     Automatically research prices for multiple recipes across all available sites.
@@ -438,8 +629,8 @@ def research_recipes(recipes: List[dict]) -> List[dict]:
             {
                 "name": "Recipe Name",
                 "ingredients": [
-                    {"name": "milk", "price": "$3.99", "site": "Target"},
-                    {"name": "eggs", "price": "$4.50", "site": "Walmart"}
+                    {"name": "milk", "price": "$3.99", "site": "Target", "calories": 150},
+                    {"name": "eggs", "price": "$4.50", "site": "Walmart", "calories": 70}
                 ],
                 "total_price": "$8.49",
                 "status": "success" or "partial" or "failed"
