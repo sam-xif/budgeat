@@ -1,6 +1,12 @@
 # BudgEat 🥗
 
-AI-powered grocery price research with vision capabilities. Uses NVIDIA's Nemotron VLM to search multiple stores and find the best prices.
+AI-powered grocery price research tool with vision capabilities. Uses NVIDIA's Nemotron VLM to search multiple stores and find the best prices. Designed to help low-income families and/or individuals on strict diets.
+
+
+
+https://github.com/user-attachments/assets/01968c58-b37f-49ea-b563-7aa263f3a7fc
+
+
 
 ## Features
 
